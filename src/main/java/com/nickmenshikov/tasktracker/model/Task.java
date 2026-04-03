@@ -9,7 +9,7 @@ public class Task {
     private Instant createdAt;
     private Status status;
     private Priority priority;
-    private User creatorId;
+    private Long creatorId;
 
     public Long getId() {
         return id;
@@ -51,11 +51,11 @@ public class Task {
         this.priority = priority;
     }
 
-    public User getCreatorId() {
+    public Long getCreatorId() {
         return creatorId;
     }
 
-    public void setCreatorId(User creatorId) {
+    public void setCreatorId(Long creatorId) {
         this.creatorId = creatorId;
     }
 

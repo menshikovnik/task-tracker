@@ -25,7 +25,7 @@ public class TaskDao {
             ps.setTimestamp(3, java.sql.Timestamp.from(task.getCreatedAt()));
             ps.setString(4, task.getStatus().name());
             ps.setString(5, task.getPriority().name());
-            ps.setLong(6, task.getCreatorId().getId());
+            ps.setLong(6, task.getCreatorId());
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);

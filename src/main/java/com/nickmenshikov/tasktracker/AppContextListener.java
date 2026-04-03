@@ -5,6 +5,7 @@ import com.nickmenshikov.tasktracker.dao.UserDao;
 import com.nickmenshikov.tasktracker.service.TaskService;
 import com.nickmenshikov.tasktracker.service.UserService;
 import com.nickmenshikov.tasktracker.util.DataSourceFactory;
+import io.github.cdimascio.dotenv.Dotenv;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -19,10 +20,11 @@ public class AppContextListener implements ServletContextListener {
     @Override
     public void contextInitialized(ServletContextEvent sce) {
         ServletContext servletContext = sce.getServletContext();
+        Dotenv dotenv = Dotenv.configure().load();
 
-        String url = servletContext.getInitParameter("jdbc.url");
-        String user = servletContext.getInitParameter("jdbc.user");
-        String password = servletContext.getInitParameter("jdbc.password");
+        String url = dotenv.get("JDBC_URL");
+        String user = dotenv.get("DB_USER");
+        String password = dotenv.get("DB_PASSWORD");
 
         DataSource dataSource = DataSourceFactory.create(url, user, password);
 

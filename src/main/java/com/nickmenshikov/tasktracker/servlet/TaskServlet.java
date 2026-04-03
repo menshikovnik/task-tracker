@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
-@WebServlet("/tasks")
+@WebServlet("/api/tasks/*")
 public class TaskServlet extends HttpServlet {
 
     private TaskService taskService;
@@ -36,7 +36,7 @@ public class TaskServlet extends HttpServlet {
             String title = req.getParameter("title");
             String description = req.getParameter("description");
             String priority = req.getParameter("priority");
-            String userId = req.getParameter("userId");
+            String creatorId = req.getParameter("creatorId");
             String status = req.getParameter("status");
 
             if (title == null || title.isBlank()) {
@@ -49,7 +49,7 @@ public class TaskServlet extends HttpServlet {
                 return;
             }
 
-            taskService.createTask(title, description,status, priority, userId);
+            taskService.createTask(title, description,status, priority, creatorId);
             try {
                 resp.sendRedirect(req.getContextPath() + "/tasks");
             } catch (IOException e) {
