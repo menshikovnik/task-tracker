@@ -1,7 +1,10 @@
 package com.nickmenshikov.tasktracker.model;
 
+import org.springframework.stereotype.Component;
+
 import java.time.Instant;
 
+@Component
 public class User {
     private Long id;
     private String username;

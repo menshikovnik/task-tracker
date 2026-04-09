@@ -1,14 +1,17 @@
 package com.nickmenshikov.tasktracker.service;
 
 import com.nickmenshikov.tasktracker.dao.TaskDao;
+import com.nickmenshikov.tasktracker.dto.CreateTaskRequest;
 import com.nickmenshikov.tasktracker.exception.TaskNotFoundException;
 import com.nickmenshikov.tasktracker.model.Priority;
 import com.nickmenshikov.tasktracker.model.Status;
 import com.nickmenshikov.tasktracker.model.Task;
+import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.List;
 
+@Service
 public class TaskService {
     private final TaskDao taskDao;
 
@@ -16,18 +19,18 @@ public class TaskService {
         this.taskDao = taskDao;
     }
 
-    public void createTask(String title, String description, String status, String priority, Long userId) {
+    public Task createTask(CreateTaskRequest request, Long userId) {
         Task task = new Task();
-        task.setTitle(title);
-        task.setDescription(description);
-        task.setStatus(Status.valueOf(status.toUpperCase()));
-        task.setPriority(Priority.valueOf(priority.toUpperCase()));
+        task.setTitle(request.title());
+        task.setDescription(request.description());
+        task.setStatus(request.status());
+        task.setPriority(request.priority());
         task.setCreatorId(userId);
         task.setCreatedAt(Instant.now());
-        taskDao.save(task);
+        return taskDao.save(task);
     }
 
-    public List<Task> getAllTasks(String creatorId) {
+    public List<Task> getAllTasks(Long creatorId) {
         return taskDao.findAll(creatorId);
     }
 

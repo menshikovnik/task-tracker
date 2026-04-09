@@ -1,13 +1,17 @@
 package com.nickmenshikov.tasktracker.service;
 
 import com.nickmenshikov.tasktracker.dao.UserDao;
+import com.nickmenshikov.tasktracker.exception.BadRequestException;
 import com.nickmenshikov.tasktracker.exception.UserNotFoundException;
 import com.nickmenshikov.tasktracker.exception.UsernameAlreadyTakenException;
 import com.nickmenshikov.tasktracker.exception.InvalidPasswordException;
 import com.nickmenshikov.tasktracker.model.User;
 import com.nickmenshikov.tasktracker.util.PasswordUtil;
+import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 
+@Service
 public class UserService {
     private final UserDao userDao;
 
@@ -15,7 +19,7 @@ public class UserService {
         this.userDao = userDao;
     }
 
-    public void register(String username, String password) {
+    public User register(String username, String password, String confirmPassword) {
 
         userDao.findByUsername(username).ifPresent(
                 user -> {
@@ -23,13 +27,17 @@ public class UserService {
                 }
         );
 
+        if (!password.equals(confirmPassword)) {
+            throw new BadRequestException("Passwords don't match");
+        }
+
         User newUser = new User();
 
         newUser.setUsername(username);
         newUser.setPasswordHash(PasswordUtil.hashPassword(password));
         newUser.setCreatedAt(Instant.now());
 
-        userDao.save(newUser);
+        return userDao.save(newUser);
     }
 
     public User login(String username, String password) {
