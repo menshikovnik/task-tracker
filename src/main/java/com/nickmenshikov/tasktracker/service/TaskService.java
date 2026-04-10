@@ -2,6 +2,7 @@ package com.nickmenshikov.tasktracker.service;
 
 import com.nickmenshikov.tasktracker.dao.TaskDao;
 import com.nickmenshikov.tasktracker.dto.CreateTaskRequest;
+import com.nickmenshikov.tasktracker.dto.UpdateTaskRequest;
 import com.nickmenshikov.tasktracker.exception.TaskNotFoundException;
 import com.nickmenshikov.tasktracker.model.Priority;
 import com.nickmenshikov.tasktracker.model.Status;
@@ -30,13 +31,31 @@ public class TaskService {
         return taskDao.save(task);
     }
 
-    public List<Task> getAllTasks(Long creatorId) {
-        return taskDao.findAll(creatorId);
+    public List<Task> getAllTasks(Long creatorId, int page, int size, Status status, Priority priority) {
+        return taskDao.findAll(creatorId, page, size, status, priority);
     }
 
     public Task getTaskById(Long id, Long userId) {
         return taskDao.getById(id, userId).orElseThrow(
                 () -> new TaskNotFoundException("Task not found " + id)
         );
+    }
+
+    public Task updateTask(Long id, Long userId, UpdateTaskRequest request) {
+        Task task = taskDao.getById(id, userId).orElseThrow(
+                () -> new TaskNotFoundException("Task not found" + id)
+        );
+
+        request.applyTo(task);
+
+        return taskDao.update(task);
+    }
+
+    public void deleteTask(Long id, Long userId) {
+        Task task = taskDao.getById(id, userId).orElseThrow(
+                () -> new TaskNotFoundException("Task not found" + id)
+        );
+
+        taskDao.delete(task.getId());
     }
 }

@@ -3,10 +3,16 @@ package com.nickmenshikov.tasktracker.dao;
 import com.nickmenshikov.tasktracker.model.Priority;
 import com.nickmenshikov.tasktracker.model.Status;
 import com.nickmenshikov.tasktracker.model.Task;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,85 +20,63 @@ import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
-public class TaskDao {
+public class TaskDao extends BaseDao<Task>{
 
-    private final DataSource dataSource;
+    private final SessionFactory sessionFactory;
 
-    public Task save(Task task) {
-        String sql = "INSERT into tasks (title, description, created_at, status, priority, user_id) values (?, ?, ?, ?, ?, ?);";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, task.getTitle());
-            ps.setString(2, task.getDescription());
-            ps.setTimestamp(3, java.sql.Timestamp.from(task.getCreatedAt()));
-            ps.setString(4, task.getStatus().name());
-            ps.setString(5, task.getPriority().name());
-            ps.setLong(6, task.getCreatorId());
-            ps.executeUpdate();
-
-            try(ResultSet keys = ps.getGeneratedKeys()) {
-                if (keys.next()) {
-                    task.setId(keys.getLong(1));
-                }
-            }
-            return task;
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+    @Override
+    protected SessionFactory getSessionFactory() {
+        return sessionFactory;
     }
 
-    public List<Task> findAll(Long creatorId) {
-        String sql = "SELECT * FROM tasks where user_id = ?";
-        List<Task> tasks = new ArrayList<>();
+    public List<Task> findAll(Long creatorId, int page, int size, Status status, Priority priority) {
 
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
+        try (Session session = sessionFactory.openSession()) {
+            CriteriaBuilder cb = session.getCriteriaBuilder();
+            CriteriaQuery<Task> cq = cb.createQuery(Task.class);
+            Root<Task> root = cq.from(Task.class);
 
-            ps.setLong(1, creatorId);
-            ResultSet resultSet = ps.executeQuery();
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.equal(root.get("creatorId"), creatorId));
 
-            while (resultSet.next()) {
-                tasks.add(setTask(resultSet));
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
             }
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
 
-        return tasks;
+            if (priority != null) {
+                predicates.add(cb.equal(root.get("priority"), priority));
+            }
+
+            cq.where(predicates.toArray(new Predicate[0]));
+
+            return session.createQuery(cq)
+                    .setFirstResult(page * size)
+                    .setMaxResults(size)
+                    .list();
+        }
     }
 
     public Optional<Task> getById(Long id, Long userId) {
-        String sql = "SELECT * from tasks WHERE id = ? AND user_id = ?";
-
-        try (Connection connection = dataSource.getConnection();
-             PreparedStatement ps = connection.prepareStatement(sql)) {
-
-            ps.setLong(1, id);
-            ps.setLong(2, userId);
-
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return Optional.of(setTask(rs));
-            }
-
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
+        try (Session session = sessionFactory.openSession()) {
+            return session.createQuery("from Task where id = :id and creatorId = :userId", Task.class)
+                    .setParameter("id", id)
+                    .setParameter("userId", userId)
+                    .uniqueResultOptional();
         }
-        return Optional.empty();
     }
 
-    private Task setTask(ResultSet rs) throws SQLException {
-        Task task = new Task();
-        task.setId(rs.getLong("id"));
-        task.setTitle(rs.getString("title"));
-        task.setDescription(rs.getString("description"));
-        task.setCreatedAt(rs.getTimestamp("created_at").toInstant());
-        task.setStatus(Status.valueOf(rs.getString("status")));
-        task.setPriority(Priority.valueOf(rs.getString("priority")));
-        task.setCreatorId(rs.getLong("user_id"));
-
-        return task;
+    public void delete(Long id) {
+        Transaction transaction = null;
+        try (Session session = getSessionFactory().openSession()) {
+            transaction = session.beginTransaction();
+            Task task = session.find(Task.class, id);
+            session.remove(task);
+            transaction.commit();
+        } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
+            throw new RuntimeException(e);
+        }
     }
 }
