@@ -1,5 +1,6 @@
 package com.nickmenshikov.flux.core.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @ControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -37,6 +39,18 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<?> handleInternalServerError(RuntimeException exception) {
-        return ResponseEntity.internalServerError().body(Map.of("error", exception.getMessage()));
+        log.error("Unhandled exception", exception);
+        return ResponseEntity.internalServerError().body(Map.of(
+                "error", "internal_server_error",
+                "message", "An unexpected error occurred"
+        ));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<?> handleException(Exception exception) {
+        log.error("Unhandled exception", exception);
+        return ResponseEntity.internalServerError()
+                .body(Map.of("error", "internal_server_error",
+                        "message", "An unexpected error occurred"));
     }
 }

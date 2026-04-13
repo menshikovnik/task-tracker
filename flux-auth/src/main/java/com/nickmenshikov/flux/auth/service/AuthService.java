@@ -1,10 +1,10 @@
 package com.nickmenshikov.flux.auth.service;
 
-import com.nickmenshikov.flux.auth.repository.UserRepository;
 import com.nickmenshikov.flux.core.dto.AuthTokens;
 import com.nickmenshikov.flux.core.dto.LoginRequest;
 import com.nickmenshikov.flux.core.dto.RegistrationRequest;
 import com.nickmenshikov.flux.core.exception.BadRequestException;
+import com.nickmenshikov.flux.core.model.FluxUserDetails;
 import com.nickmenshikov.flux.core.model.RefreshToken;
 import com.nickmenshikov.flux.core.model.User;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,6 @@ public class AuthService {
 
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
 
@@ -33,34 +32,32 @@ public class AuthService {
                 )
         );
 
-        User user = userRepository.findUserByUsername(auth.getName())
-                .or(() -> userRepository.findUserByEmail(auth.getName()))
-                .orElseThrow();
+        FluxUserDetails userDetails = (FluxUserDetails) auth.getPrincipal();
 
-        return buildAuthResponse(user.getUsername(), user.getId());
+        return buildAuthResponse(userDetails.getUser());
     }
 
     public AuthTokens register(RegistrationRequest request) {
         User user = userService.register(request.username(), request.email(), request.password(), request.confirmPassword());
 
-        return buildAuthResponse(user.getUsername(), user.getId());
+        return buildAuthResponse(user);
     }
 
     public AuthTokens refresh(String refreshToken) {
         RefreshToken newToken = refreshTokenService.rotate(refreshToken);
 
-        User user = userRepository.findById(newToken.getUserId()).orElseThrow();
+        User user = newToken.getUser();
 
-        return buildAuthResponse(user.getUsername(), user.getId());
+        return buildAuthResponse(user);
     }
 
     public void logout(String refreshToken) {
         refreshTokenService.revokeByToken(refreshToken);
     }
 
-    private AuthTokens buildAuthResponse(String username, Long userId) {
-        String accessToken = jwtService.generateToken(username);
-        RefreshToken refreshToken = refreshTokenService.create(userId);
+    private AuthTokens buildAuthResponse(User user) {
+        String accessToken = jwtService.generateToken(user.getUsername());
+        RefreshToken refreshToken = refreshTokenService.create(user);
         return new AuthTokens(accessToken, refreshToken.getToken());
     }
 

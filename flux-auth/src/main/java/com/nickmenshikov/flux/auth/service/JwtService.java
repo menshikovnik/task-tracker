@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.util.Date;
 
 @Service
@@ -18,7 +19,7 @@ public class JwtService {
     private String secret;
 
     @Value("${jwt.expiration-ms}")
-    private Long expirationMs;
+    private Duration accessExpiration;
 
     private SecretKey getSignKey() {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
@@ -28,7 +29,7 @@ public class JwtService {
         return Jwts.builder()
                 .subject(username)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expirationMs))
+                .expiration(new Date(System.currentTimeMillis() + accessExpiration.toMillis()))
                 .signWith(getSignKey())
                 .compact();
     }

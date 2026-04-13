@@ -3,6 +3,8 @@ package com.nickmenshikov.flux.core.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.Instant;
 
@@ -31,6 +33,8 @@ public class Task {
     @Column(nullable = false)
     private Priority priority;
 
-    @Column(name = "user_id", nullable = false)
-    private Long creatorId;
+    @JoinColumn(name = "user_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private User creator;
 }

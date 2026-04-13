@@ -28,7 +28,7 @@ public class UserService {
 
         userRepository.findUserByEmail(email).ifPresent(
                 _ -> {
-                    throw new UsernameAlreadyTakenException("Email is already taken: " + username);
+                    throw new UsernameAlreadyTakenException("Email is already taken: " + email);
                 }
         );
 

@@ -1,12 +1,16 @@
 package com.nickmenshikov.flux.auth.service;
 
 import com.nickmenshikov.flux.auth.repository.UserRepository;
+import com.nickmenshikov.flux.core.model.FluxUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -20,11 +24,12 @@ public class FluxUserDetailsService implements UserDetailsService {
         return userRepository.findUserByUsername(login)
                 .or(() -> userRepository.findUserByEmail(login))
                 .map(
-                user -> org.springframework.security.core.userdetails.User.builder()
-                        .username(user.getUsername())
-                        .password(user.getPasswordHash())
-                        .authorities("ROLE_USER")
-                        .build()
+                user -> new FluxUserDetails(
+                        user,
+                        user.getUsername(),
+                        user.getPasswordHash(),
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                )
         ).orElseThrow(
                 () -> new UsernameNotFoundException("User not found: " + login)
         );

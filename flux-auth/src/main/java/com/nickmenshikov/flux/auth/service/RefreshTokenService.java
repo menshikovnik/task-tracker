@@ -3,11 +3,14 @@ package com.nickmenshikov.flux.auth.service;
 import com.nickmenshikov.flux.auth.repository.RefreshTokenRepository;
 import com.nickmenshikov.flux.core.exception.UnauthorizedException;
 import com.nickmenshikov.flux.core.model.RefreshToken;
+import com.nickmenshikov.flux.core.model.User;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -17,17 +20,11 @@ public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Value("${jwt.refresh-expiration-ms}")
-    private long refreshExpirationMs;
+    private Duration refreshExpiration;
 
     @Transactional
-    public RefreshToken create(Long userId) {
-        RefreshToken token = new RefreshToken();
-        token.setUserId(userId);
-        token.setToken(UUID.randomUUID().toString());
-        token.setExpiresAt(Instant.now().plusMillis(refreshExpirationMs));
-        token.setCreatedAt(Instant.now());
-
-        return refreshTokenRepository.save(token);
+    public RefreshToken create(User user) {
+        return getRefreshToken(user);
     }
 
     @Transactional
@@ -41,18 +38,23 @@ public class RefreshTokenService {
             throw new UnauthorizedException("Refresh token is expired");
         }
 
-        Long userId = existing.getUserId();
         refreshTokenRepository.delete(existing);
 
+        return getRefreshToken(existing.getUser());
+    }
+
+    @NonNull
+    private RefreshToken getRefreshToken(User user) {
         RefreshToken newToken = new RefreshToken();
-        newToken.setUserId(userId);
+        newToken.setUser(user);
         newToken.setToken(UUID.randomUUID().toString());
-        newToken.setExpiresAt(Instant.now().plusMillis(refreshExpirationMs));
+        newToken.setExpiresAt(Instant.now().plusMillis(refreshExpiration.toMillis()));
         newToken.setCreatedAt(Instant.now());
 
         return refreshTokenRepository.save(newToken);
     }
 
+    @Transactional
     public void revokeByToken(String token) {
         refreshTokenRepository.deleteByToken(token);
     }
