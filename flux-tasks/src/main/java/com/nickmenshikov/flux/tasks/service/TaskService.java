@@ -32,6 +32,7 @@ public class TaskService {
         task.setPriority(request.priority());
         task.setCreator(user);
         task.setCreatedAt(Instant.now());
+        task.setDueDate(request.dueDate());
 
         if (request.projectId() != null) {
             Project project = projectRepository.findProjectByIdAndUser(request.projectId(), user)

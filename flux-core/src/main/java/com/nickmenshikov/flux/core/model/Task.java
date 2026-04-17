@@ -47,6 +47,9 @@ public class Task {
     @JoinColumn(name = "parent_id")
     private Task parent;
 
+    @Column(name = "due_date")
+    private Instant dueDate;
+
     @OneToMany(mappedBy = "parent", fetch = FetchType.LAZY)
     private List<Task> subtasks;
 }

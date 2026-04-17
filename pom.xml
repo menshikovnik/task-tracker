@@ -27,6 +27,7 @@
         <module>flux-projects</module>
         <module>flux-time</module>
         <module>flux-api</module>
+        <module>flux-search</module>
     </modules>
 
 

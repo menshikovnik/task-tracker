@@ -12,7 +12,8 @@ public record TaskResponse(
         String description,
         Status status,
         Priority priority,
-        Instant createdAt
+        Instant createdAt,
+        Instant dueDate
 ) {
     public static TaskResponse from(Task task) {
         return new TaskResponse(
@@ -21,7 +22,8 @@ public record TaskResponse(
                 task.getDescription(),
                 task.getStatus(),
                 task.getPriority(),
-                task.getCreatedAt()
+                task.getCreatedAt(),
+                task.getDueDate()
         );
     }
 }

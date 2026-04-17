@@ -5,6 +5,8 @@ import com.nickmenshikov.flux.core.model.Status;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
+import java.time.Instant;
+
 public record CreateTaskRequest(
         @NotBlank(message = "Title must not be empty")
         String title,
@@ -17,6 +19,8 @@ public record CreateTaskRequest(
         @NotNull(message = "Status must not be empty")
         Status status,
 
-        Long projectId
+        Long projectId,
+
+        Instant dueDate
 ) {
 }
