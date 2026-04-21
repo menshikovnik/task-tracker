@@ -35,13 +35,13 @@ public class AuthService {
 
         FluxUserDetails userDetails = (FluxUserDetails) auth.getPrincipal();
 
-        return buildAuthResponse(userDetails.getUser());
+        return buildAuthResponse(userDetails.getUsername(), userDetails.getUserId());
     }
 
     public AuthTokens register(RegistrationRequest request) {
         User user = userService.register(request.username(), request.email(), request.password(), request.confirmPassword());
 
-        return buildAuthResponse(user);
+        return buildAuthResponse(user.getUsername(), user.getId());
     }
 
     @Transactional
@@ -50,16 +50,16 @@ public class AuthService {
 
         User user = newToken.getUser();
 
-        return buildAuthResponse(user);
+        return buildAuthResponse(user.getUsername(), user.getId());
     }
 
     public void logout(String refreshToken) {
         refreshTokenService.revokeByToken(refreshToken);
     }
 
-    private AuthTokens buildAuthResponse(User user) {
-        String accessToken = jwtService.generateToken(user.getUsername());
-        RefreshToken refreshToken = refreshTokenService.create(user);
+    private AuthTokens buildAuthResponse(String username, Long id) {
+        String accessToken = jwtService.generateToken(username, id);
+        RefreshToken refreshToken = refreshTokenService.create(id);
         return new AuthTokens(accessToken, refreshToken.getToken());
     }
 

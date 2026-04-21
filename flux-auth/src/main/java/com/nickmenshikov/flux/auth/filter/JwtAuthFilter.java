@@ -1,7 +1,6 @@
 package com.nickmenshikov.flux.auth.filter;
 
-import com.nickmenshikov.flux.auth.service.FluxUserDetailsService;
-import com.nickmenshikov.flux.auth.service.JwtService;
+import com.nickmenshikov.flux.core.model.FluxUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,44 +8,43 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NullMarked;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
-    private final FluxUserDetailsService userDetailsService;
-
     @NullMarked
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-        String authHeader = request.getHeader("Authorization");
+        String username = request.getHeader("X-Username");
+        String userIdHeader = request.getHeader("X-User-Id");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer")) {
+        if (username == null || userIdHeader == null) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = authHeader.substring(7);
+        Long userId = Long.parseLong(userIdHeader);
 
-        if (jwtService.isValid(token)) {
-            String username = jwtService.getUsername(token);
+        FluxUserDetails userDetails = new FluxUserDetails(
+                userId,
+                username,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        );
 
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-            auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            SecurityContextHolder.getContext().setAuthentication(auth);
-        }
+        SecurityContextHolder.getContext().setAuthentication(auth);
 
         filterChain.doFilter(request, response);
     }

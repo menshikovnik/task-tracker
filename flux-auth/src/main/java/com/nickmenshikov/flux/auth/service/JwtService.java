@@ -25,9 +25,10 @@ public class JwtService {
         return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, Long userId) {
         return Jwts.builder()
                 .subject(username)
+                .claim("userId", userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + accessExpiration.toMillis()))
                 .signWith(getSignKey())

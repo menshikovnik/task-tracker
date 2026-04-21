@@ -9,11 +9,11 @@ import java.util.Collection;
 @Getter
 public class FluxUserDetails extends User {
 
-    private final com.nickmenshikov.flux.core.model.User user;
+    private final Long userId;
 
-    public FluxUserDetails(com.nickmenshikov.flux.core.model.User user, String username, String password, Collection<? extends GrantedAuthority> authorities) {
-        super(username, password, authorities);
-        this.user = user;
+    public FluxUserDetails(Long userId, String username, Collection<? extends GrantedAuthority> authorities) {
+        super(username, "", authorities);
+        this.userId = userId;
     }
 
 }

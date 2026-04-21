@@ -28,7 +28,7 @@ public class TaskController {
 
     @PostMapping(version = "1.0")
     public ResponseEntity<Void> create(@Valid @RequestBody CreateTaskRequest request, @AuthenticationPrincipal FluxUserDetails userDetails) {
-        Task task = taskService.createTask(request, userDetails.getUser());
+        Task task = taskService.createTask(request, userDetails.getUserId());
         return ResponseEntity.created(URI.create("/api/tasks/" + task.getId())).build();
     }
 
@@ -39,22 +39,22 @@ public class TaskController {
             @RequestParam(required = false) Long projectId,
             @PageableDefault(size = 20) Pageable pageable,
             @AuthenticationPrincipal FluxUserDetails userDetails) {
-        return ResponseEntity.ok(taskService.getAllTasks(userDetails.getUser(), pageable, status, priority, projectId).map(TaskResponse::from));
+        return ResponseEntity.ok(taskService.getAllTasks(userDetails.getUserId(), pageable, status, priority, projectId).map(TaskResponse::from));
     }
 
     @GetMapping(value = "/{id}", version = "1.0")
     public ResponseEntity<TaskResponse> getTaskById(@PathVariable Long id, @AuthenticationPrincipal FluxUserDetails userDetails) {
-        return ResponseEntity.ok(TaskResponse.from(taskService.getTaskById(id, userDetails.getUser())));
+        return ResponseEntity.ok(TaskResponse.from(taskService.getTaskById(id, userDetails.getUserId())));
     }
 
     @PatchMapping(value = "/{id}", version = "1.0")
     public ResponseEntity<TaskResponse> update(@PathVariable Long id, @RequestBody UpdateTaskRequest request, @AuthenticationPrincipal FluxUserDetails userDetails) {
-        return ResponseEntity.ok(TaskResponse.from(taskService.updateTask(id, userDetails.getUser(), request)));
+        return ResponseEntity.ok(TaskResponse.from(taskService.updateTask(id, userDetails.getUserId(), request)));
     }
 
     @DeleteMapping(value = "/{id}", version = "1.0")
     public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal FluxUserDetails userDetails) {
-        taskService.deleteTask(id, userDetails.getUser());
+        taskService.deleteTask(id, userDetails.getUserId());
         return ResponseEntity.noContent().build();
     }
 }

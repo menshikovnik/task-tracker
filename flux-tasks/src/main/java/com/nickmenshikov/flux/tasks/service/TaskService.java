@@ -1,5 +1,6 @@
 package com.nickmenshikov.flux.tasks.service;
 
+import com.nickmenshikov.flux.auth.repository.UserRepository;
 import com.nickmenshikov.flux.core.dto.CreateTaskRequest;
 import com.nickmenshikov.flux.core.dto.UpdateTaskRequest;
 import com.nickmenshikov.flux.core.exception.ProjectNotFoundException;
@@ -21,10 +22,13 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
 
     @Transactional
-    public Task createTask(CreateTaskRequest request, User user) {
+    public Task createTask(CreateTaskRequest request, Long userId) {
+        User user = userRepository.getReferenceById(userId);
+
         Task task = new Task();
         task.setTitle(request.title());
         task.setDescription(request.description());
@@ -44,19 +48,22 @@ public class TaskService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Task> getAllTasks(User creator, Pageable pageable, Status status, Priority priority, Long projectId) {
+    public Page<Task> getAllTasks(Long creatorId, Pageable pageable, Status status, Priority priority, Long projectId) {
+        User creator = userRepository.getReferenceById(creatorId);
         return taskRepository.findAllFiltered(creator, status, priority, pageable, projectId);
     }
 
     @Transactional(readOnly = true)
-    public Task getTaskById(Long id, User user) {
+    public Task getTaskById(Long id, Long userId) {
+        User user = userRepository.getReferenceById(userId);
         return taskRepository.findTaskByIdAndCreator(id, user).orElseThrow(
                 () -> new TaskNotFoundException("Task not found " + id)
         );
     }
 
     @Transactional
-    public Task updateTask(Long id, User user, UpdateTaskRequest request) {
+    public Task updateTask(Long id, Long userId, UpdateTaskRequest request) {
+        User user = userRepository.getReferenceById(userId);
         Task task = taskRepository.findTaskByIdAndCreator(id, user).orElseThrow(
                 () -> new TaskNotFoundException("Task not found: " + id)
         );
@@ -67,7 +74,8 @@ public class TaskService {
     }
 
     @Transactional
-    public void deleteTask(Long id, User user) {
+    public void deleteTask(Long id, Long userId) {
+        User user = userRepository.getReferenceById(userId);
         Task task = taskRepository.findTaskByIdAndCreator(id, user).orElseThrow(
                 () -> new TaskNotFoundException("Task not found: " + id)
         );

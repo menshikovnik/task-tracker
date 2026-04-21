@@ -1,5 +1,6 @@
 package com.nickmenshikov.flux.projects.service;
 
+import com.nickmenshikov.flux.auth.repository.UserRepository;
 import com.nickmenshikov.flux.core.dto.CreateProjectRequest;
 import com.nickmenshikov.flux.core.exception.ProjectNameAlreadyTakenException;
 import com.nickmenshikov.flux.core.exception.ProjectNotFoundException;
@@ -19,9 +20,13 @@ import java.time.Instant;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
 
     @Transactional
-    public Project create(CreateProjectRequest request, User user) {
+    public Project create(CreateProjectRequest request, Long id) {
+
+        User user = userRepository.getReferenceById(id);
+
         projectRepository.findProjectByNameAndUser(request.name(), user)
                 .ifPresent(
                         _ -> {
@@ -42,12 +47,15 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Project> getAllProject(User user, Boolean isArchived, Pageable pageable) {
+    public Page<Project> getAllProject(Long id, Boolean isArchived, Pageable pageable) {
+        User user = userRepository.getReferenceById(id);
         return projectRepository.findAllByOwner(user, isArchived, pageable);
     }
 
     @Transactional
-    public void delete(Long id, User user) {
+    public void delete(Long id, Long userId) {
+        User user = userRepository.getReferenceById(userId);
+
         Project project = projectRepository.findProjectByIdAndUser(id, user)
                 .orElseThrow(
                         () -> new ProjectNotFoundException("Project not found: " + id)
@@ -57,7 +65,9 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Project getById(Long id, User user) {
+    public Project getById(Long id, Long userId) {
+        User user = userRepository.getReferenceById(userId);
+
         return projectRepository.findProjectByIdAndUser(id, user)
                 .orElseThrow(
                         () -> new ProjectNotFoundException("Project not found: " + id)

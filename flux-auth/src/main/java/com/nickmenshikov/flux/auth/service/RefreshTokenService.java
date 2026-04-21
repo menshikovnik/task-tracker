@@ -1,6 +1,7 @@
 package com.nickmenshikov.flux.auth.service;
 
 import com.nickmenshikov.flux.auth.repository.RefreshTokenRepository;
+import com.nickmenshikov.flux.auth.repository.UserRepository;
 import com.nickmenshikov.flux.core.exception.UnauthorizedException;
 import com.nickmenshikov.flux.core.model.RefreshToken;
 import com.nickmenshikov.flux.core.model.User;
@@ -18,13 +19,14 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
 
     @Value("${jwt.refresh-expiration-ms}")
     private Duration refreshExpiration;
 
     @Transactional
-    public RefreshToken create(User user) {
-        return getRefreshToken(user);
+    public RefreshToken create(Long userId) {
+        return getRefreshToken(userId);
     }
 
     @Transactional
@@ -40,11 +42,13 @@ public class RefreshTokenService {
 
         refreshTokenRepository.deleteByToken(existing.getToken());
 
-        return getRefreshToken(existing.getUser());
+        return getRefreshToken(existing.getUser().getId());
     }
 
     @NonNull
-    private RefreshToken getRefreshToken(User user) {
+    private RefreshToken getRefreshToken(Long userId) {
+        User user = userRepository.getReferenceById(userId);
+
         RefreshToken newToken = new RefreshToken();
         newToken.setUser(user);
         newToken.setToken(UUID.randomUUID().toString());

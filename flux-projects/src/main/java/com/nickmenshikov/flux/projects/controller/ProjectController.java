@@ -24,7 +24,7 @@ public class ProjectController {
 
     @PostMapping(version = "1.0")
     public ResponseEntity<ProjectResponse> create(@RequestBody CreateProjectRequest request, @AuthenticationPrincipal FluxUserDetails userDetails) {
-        Project project = projectService.create(request, userDetails.getUser());
+        Project project = projectService.create(request, userDetails.getUserId());
         return ResponseEntity
                 .created(URI.create("/api/projects/" + project.getId()))
                 .body(ProjectResponse.from(project));
@@ -36,17 +36,17 @@ public class ProjectController {
             @PageableDefault(size = 20) Pageable pageable,
             @AuthenticationPrincipal FluxUserDetails userDetails
     ) {
-        return ResponseEntity.ok(projectService.getAllProject(userDetails.getUser(), archived, pageable).map(ProjectResponse::from));
+        return ResponseEntity.ok(projectService.getAllProject(userDetails.getUserId(), archived, pageable).map(ProjectResponse::from));
     }
 
     @GetMapping(value = "/{id}", version = "1.0")
     public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Long id, @AuthenticationPrincipal FluxUserDetails userDetails) {
-        return ResponseEntity.ok(ProjectResponse.from(projectService.getById(id, userDetails.getUser())));
+        return ResponseEntity.ok(ProjectResponse.from(projectService.getById(id, userDetails.getUserId())));
     }
 
     @DeleteMapping(value = "/{id}", version = "1.0")
     public ResponseEntity<Void> delete(@PathVariable Long id, @AuthenticationPrincipal FluxUserDetails userDetails) {
-        projectService.delete(id, userDetails.getUser());
+        projectService.delete(id, userDetails.getUserId());
         return ResponseEntity.noContent().build();
     }
 }

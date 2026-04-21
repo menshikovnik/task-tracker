@@ -1,3 +1,6 @@
 spring:
   application:
     name: flux-search
+
+server:
+  port: 8082

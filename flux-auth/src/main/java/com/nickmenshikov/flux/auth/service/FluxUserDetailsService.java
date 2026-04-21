@@ -25,9 +25,8 @@ public class FluxUserDetailsService implements UserDetailsService {
                 .or(() -> userRepository.findUserByEmail(login))
                 .map(
                 user -> new FluxUserDetails(
-                        user,
+                        user.getId(),
                         user.getUsername(),
-                        user.getPasswordHash(),
                         List.of(new SimpleGrantedAuthority("ROLE_USER"))
                 )
         ).orElseThrow(
